@@ -13,15 +13,16 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
+    # Backend setup
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
         dotnet-version: 8.0.x
         
-    - name: Restore dependencies
+    - name: Restore backend dependencies
       run: dotnet restore
       
-    - name: Build
+    - name: Build backend
       run: dotnet build --no-restore --configuration Release
       
     - name: Test Backend
@@ -29,11 +30,26 @@ jobs:
         cd FlagExplorer.API.Tests
         dotnet test --no-build --configuration Release --collect:"XPlat Code Coverage" --logger trx
       
+    # Frontend setup
+    - name: Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        
+    - name: Install frontend dependencies
+      working-directory: ./FlagExplorer.Web
+      run: npm install
+      
+    - name: Build frontend
+      working-directory: ./FlagExplorer.Web
+      run: npm run build
+      
     - name: Test Frontend
       run: |
         cd FlagExplorer.Web.Tests
         dotnet test --no-build --configuration Release --collect:"XPlat Code Coverage" --logger trx
       
+    # Publish both
     - name: Publish Backend
       run: dotnet publish ./FlagExplorer.API/FlagExplorer.API.csproj -c Release -o ./publish/api
       
