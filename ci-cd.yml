@@ -13,24 +13,27 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
+    # First verify the repository structure
+    - name: Inspect repository structure
+      run: |
+        echo "Current directory: $(pwd)"
+        ls -la
+        echo "FlagExplorer.Web contents:"
+        ls -la FlagExplorer.Web/
+    
     # Backend setup
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
-        dotnet-version: 8.0.x
+        dotnet-version: '8.0.x'
         
-    - name: Restore backend dependencies
+    - name: Restore dependencies
       run: dotnet restore
       
-    - name: Build backend
+    - name: Build
       run: dotnet build --no-restore --configuration Release
       
-    - name: Test Backend
-      run: |
-        cd FlagExplorer.API.Tests
-        dotnet test --no-build --configuration Release --collect:"XPlat Code Coverage" --logger trx
-      
-    # Frontend setup - Simplified for integrated frontend
+    # Frontend setup - PRECISE PATH
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
@@ -39,26 +42,29 @@ jobs:
     - name: Install frontend dependencies
       working-directory: ./FlagExplorer.Web
       run: |
-        echo "Current directory: $(pwd)"
+        echo "Installing in: $(pwd)"
         ls -la
-        npm ci
+        if [ -f "package.json" ]; then
+          npm ci
+        else
+          echo "::error::package.json not found in FlagExplorer.Web"
+          exit 1
+        fi
       
     - name: Build frontend
       working-directory: ./FlagExplorer.Web
       run: npm run build
       
-    - name: Test Frontend
+    # Testing
+    - name: Test Backend
+      run: dotnet test --no-build --configuration Release
+    
+    # Publishing
+    - name: Publish
       run: |
-        cd FlagExplorer.Web.Tests
-        dotnet test --no-build --configuration Release --collect:"XPlat Code Coverage" --logger trx
-      
-    # Publish both
-    - name: Publish Backend
-      run: dotnet publish ./FlagExplorer.API/FlagExplorer.API.csproj -c Release -o ./publish/api
-      
-    - name: Publish Frontend
-      run: dotnet publish ./FlagExplorer.Web/FlagExplorer.Web.csproj -c Release -o ./publish/web
-      
+        dotnet publish ./FlagExplorer.API -c Release -o ./publish/api
+        dotnet publish ./FlagExplorer.Web -c Release -o ./publish/web
+        
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
