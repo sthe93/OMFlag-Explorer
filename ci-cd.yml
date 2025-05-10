@@ -27,14 +27,18 @@ jobs:
     - name: Build
       run: dotnet build --no-restore --configuration Release
       
-    # Testing with proper result collection
+    # Enhanced testing with multiple report formats
     - name: Test Backend
       run: |
         cd FlagExplorer.API.Tests
         dotnet test --no-build --configuration Release \
           --collect:"XPlat Code Coverage" \
           --logger "trx;LogFileName=backend_results.trx" \
-          --results-directory TestResults
+          --logger "html;LogFileName=backend_report.html" \
+          --logger "junit;LogFileName=backend_junit.xml" \
+          --results-directory TestResults \
+          --blame-hang-timeout 2min \
+          --blame-hang-dump-type full
       
     - name: Test Frontend
       run: |
@@ -42,7 +46,11 @@ jobs:
         dotnet test --no-build --configuration Release \
           --collect:"XPlat Code Coverage" \
           --logger "trx;LogFileName=frontend_results.trx" \
-          --results-directory TestResults
+          --logger "html;LogFileName=frontend_report.html" \
+          --logger "junit;LogFileName=frontend_junit.xml" \
+          --results-directory TestResults \
+          --blame-hang-timeout 2min \
+          --blame-hang-dump-type full
       
     # Publish test results to GitHub UI
     - name: Publish Test Results
@@ -54,16 +62,24 @@ jobs:
         reporter: dotnet-trx
         fail-on-error: false
       
-    # Upload detailed test results and coverage as artifacts
+    # Generate coverage report
+    - name: Generate Coverage Report
+      run: |
+        dotnet reportgenerator \
+          -reports:**/TestResults/**/coverage.cobertura.xml \
+          -targetdir:./CoverageReport \
+          -reporttypes:"Html;HtmlSummary;SonarQube;MarkdownSummary"
+      
+    # Upload all test artifacts
     - name: Upload Test Artifacts
       uses: actions/upload-artifact@v4
       if: always()
       with:
         name: test-artifacts
         path: |
-          **/TestResults/*.trx
-          **/TestResults/*.xml
-          **/TestResults/*.coverage
+          **/TestResults/*
+          ./CoverageReport
+        retention-days: 7
       
     # Publishing
     - name: Publish Backend
@@ -72,8 +88,25 @@ jobs:
     - name: Publish Frontend
       run: dotnet publish ./FlagExplorer.Web/FlagExplorer.Web.csproj -c Release -o ./publish/web
       
-    - name: Upload Artifacts
+    - name: Upload Release Artifacts
       uses: actions/upload-artifact@v4
       with:
         name: release-packages
         path: ./publish
+        retention-days: 7
+    
+    # Test success threshold check
+    - name: Verify Test Thresholds
+      run: |
+        # Minimum test pass percentage (adjust as needed)
+        MIN_PASS_PERCENTAGE=90
+        
+        # Calculate pass percentage from JUnit reports
+        PASS_PERCENTAGE=$(grep -h -oP '(?<=failures=")[^"]*' **/TestResults/*junit.xml | awk '{ fails+=$1; total+=1 } END { print (total-fails)/total*100 }')
+        
+        if (( $(echo "$PASS_PERCENTAGE < $MIN_PASS_PERCENTAGE" | bc -l) )); then
+          echo "::error::Test pass percentage ($PASS_PERCENTAGE%) below required threshold ($MIN_PASS_PERCENTAGE%)"
+          exit 1
+        else
+          echo "Test pass percentage ($PASS_PERCENTAGE%) meets requirement ($MIN_PASS_PERCENTAGE%)"
+        fi
