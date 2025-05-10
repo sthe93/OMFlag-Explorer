@@ -30,7 +30,7 @@ jobs:
         cd FlagExplorer.API.Tests
         dotnet test --no-build --configuration Release --collect:"XPlat Code Coverage" --logger trx
       
-    # Frontend setup
+    # Frontend setup - Simplified for integrated frontend
     - name: Setup Node.js
       uses: actions/setup-node@v4
       with:
@@ -38,7 +38,10 @@ jobs:
         
     - name: Install frontend dependencies
       working-directory: ./FlagExplorer.Web
-      run: npm install
+      run: |
+        echo "Current directory: $(pwd)"
+        ls -la
+        npm ci
       
     - name: Build frontend
       working-directory: ./FlagExplorer.Web
