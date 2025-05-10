@@ -1,0 +1,37 @@
+﻿@model FlagExplorer.Web.Models.CountryDetailsViewModel
+
+@{
+    ViewData["Title"] = Model.Name;
+}
+
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="text-center">@Model.Name</h2>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 text-center">
+                            <img src="@Model.Flag" class="img-fluid" alt="@Model.Name Flag">
+                        </div>
+                        <div class="col-md-6">
+                            <ul class="list-group list-group-flush">
+                                <li class="list-group-item">
+                                    <strong>Capital:</strong> @Model.Capital
+                                </li>
+                                <li class="list-group-item">
+                                    <strong>Population:</strong> @Model.Population.ToString("N0")
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer text-center">
+                    <a asp-action="Index" class="btn btn-primary">Back to All Flags</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

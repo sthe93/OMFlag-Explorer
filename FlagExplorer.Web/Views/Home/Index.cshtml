@@ -1,0 +1,25 @@
+﻿@model List<FlagExplorer.Web.Models.CountryViewModel>
+
+@{
+    ViewData["Title"] = "Flag Explorer";
+}
+
+<div class="container">
+    <h1 class="text-center mb-4">Flag Explorer</h1>
+    
+    <div class="row">
+        @foreach (var country in Model)
+        {
+            <div class="col-md-3 mb-4">
+                <div class="card h-100">
+                    <a asp-action="Details" asp-route-name="@country.Name">
+                        <img src="@country.Flag" class="card-img-top" alt="@country.Name Flag">
+                    </a>
+                    <div class="card-body">
+                        <h5 class="card-title text-center">@country.Name</h5>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+</div>
