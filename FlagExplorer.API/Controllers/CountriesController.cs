@@ -26,6 +26,10 @@ public class CountriesController : ControllerBase
     public async Task<IActionResult> GetCountryDetails(string name)
     {
         var country = await _countryService.GetCountryDetailsAsync(name);
+        if (country == null)
+        {
+            return NotFound();
+        }
         return Ok(country);
     }
 }

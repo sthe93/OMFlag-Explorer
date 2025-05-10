@@ -10,5 +10,5 @@ namespace FlagExplorer.Application.Interfaces;
 public interface ICountryService
 {
     Task<IEnumerable<CountryDto>> GetAllCountriesAsync();
-    Task<CountryDetailsDto> GetCountryDetailsAsync(string name);
+    Task<CountryDetailsDto?> GetCountryDetailsAsync(string name); // Made return type nullable
 }

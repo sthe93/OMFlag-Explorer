@@ -1,10 +1,12 @@
-﻿// FlagExplorer.Web.Tests/Controllers/HomeControllerTests.cs
-using FlagExplorer.Web.Controllers;
+﻿using FlagExplorer.Web.Controllers;
 using FlagExplorer.Web.Models;
 using Microsoft.AspNetCore.Mvc;
 using Moq;
+using Moq.Protected; // Add this using directive
 using System.Net;
 using System.Net.Http;
+using System.Threading; // Add for CancellationToken
+using System.Threading.Tasks;
 using Xunit;
 
 namespace FlagExplorer.Web.Tests.Controllers
@@ -13,6 +15,7 @@ namespace FlagExplorer.Web.Tests.Controllers
     {
         private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
         private readonly HomeController _controller;
+        private const string BaseAddress = "http://localhost/api/";
 
         public HomeControllerTests()
         {
@@ -28,7 +31,9 @@ namespace FlagExplorer.Web.Tests.Controllers
             mockHttpMessageHandler.Protected()
                 .Setup<Task<HttpResponseMessage>>(
                     "SendAsync",
-                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.Is<HttpRequestMessage>(req =>
+                        req.Method == HttpMethod.Get &&
+                        req.RequestUri.ToString().StartsWith($"{BaseAddress}countries")),
                     ItExpr.IsAny<CancellationToken>()
                 )
                 .ReturnsAsync(new HttpResponseMessage
@@ -37,8 +42,13 @@ namespace FlagExplorer.Web.Tests.Controllers
                     Content = new StringContent("[{\"name\":\"USA\",\"flag\":\"usa.png\"}]")
                 });
 
-            var client = new HttpClient(mockHttpMessageHandler.Object);
-            _mockHttpClientFactory.Setup(_ => _.CreateClient(It.IsAny<string>())).Returns(client);
+            var client = new HttpClient(mockHttpMessageHandler.Object)
+            {
+                BaseAddress = new Uri(BaseAddress)
+            };
+
+            _mockHttpClientFactory.Setup(_ => _.CreateClient(It.IsAny<string>()))
+                .Returns(client);
 
             // Act
             var result = await _controller.Index();
@@ -57,7 +67,9 @@ namespace FlagExplorer.Web.Tests.Controllers
             mockHttpMessageHandler.Protected()
                 .Setup<Task<HttpResponseMessage>>(
                     "SendAsync",
-                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.Is<HttpRequestMessage>(req =>
+                        req.Method == HttpMethod.Get &&
+                        req.RequestUri.ToString().StartsWith($"{BaseAddress}countries/USA")),
                     ItExpr.IsAny<CancellationToken>()
                 )
                 .ReturnsAsync(new HttpResponseMessage
@@ -66,8 +78,13 @@ namespace FlagExplorer.Web.Tests.Controllers
                     Content = new StringContent("{\"name\":\"USA\",\"flag\":\"usa.png\",\"capital\":\"Washington, D.C.\",\"population\":331000000}")
                 });
 
-            var client = new HttpClient(mockHttpMessageHandler.Object);
-            _mockHttpClientFactory.Setup(_ => _.CreateClient(It.IsAny<string>())).Returns(client);
+            var client = new HttpClient(mockHttpMessageHandler.Object)
+            {
+                BaseAddress = new Uri(BaseAddress)
+            };
+
+            _mockHttpClientFactory.Setup(_ => _.CreateClient(It.IsAny<string>()))
+                .Returns(client);
 
             // Act
             var result = await _controller.Details("USA");
@@ -86,7 +103,9 @@ namespace FlagExplorer.Web.Tests.Controllers
             mockHttpMessageHandler.Protected()
                 .Setup<Task<HttpResponseMessage>>(
                     "SendAsync",
-                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.Is<HttpRequestMessage>(req =>
+                        req.Method == HttpMethod.Get &&
+                        req.RequestUri.ToString().StartsWith($"{BaseAddress}countries/Unknown")),
                     ItExpr.IsAny<CancellationToken>()
                 )
                 .ReturnsAsync(new HttpResponseMessage
@@ -94,8 +113,13 @@ namespace FlagExplorer.Web.Tests.Controllers
                     StatusCode = HttpStatusCode.NotFound
                 });
 
-            var client = new HttpClient(mockHttpMessageHandler.Object);
-            _mockHttpClientFactory.Setup(_ => _.CreateClient(It.IsAny<string>())).Returns(client);
+            var client = new HttpClient(mockHttpMessageHandler.Object)
+            {
+                BaseAddress = new Uri(BaseAddress)
+            };
+
+            _mockHttpClientFactory.Setup(_ => _.CreateClient(It.IsAny<string>()))
+                .Returns(client);
 
             // Act
             var result = await _controller.Details("Unknown");

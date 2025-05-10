@@ -27,6 +27,8 @@
 
 	<ItemGroup>
 		<ProjectReference Include="..\FlagExplorer.API\FlagExplorer.API.csproj" />
+		<ProjectReference Include="..\FlagExplorer.Application\FlagExplorer.Application.csproj" />
+		<ProjectReference Include="..\FlagExplorer.Infrastructure\FlagExplorer.Infrastructure.csproj" />
 	</ItemGroup>
 
 </Project>

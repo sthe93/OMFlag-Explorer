@@ -25,10 +25,14 @@ jobs:
       run: dotnet build --no-restore --configuration Release
       
     - name: Test Backend
-      run: dotnet test ./FlagExplorer.API.Tests/FlagExplorer.API.Tests.csproj --no-build --configuration Release --collect:"XPlat Code Coverage" --logger trx
+      run: |
+        cd FlagExplorer.API.Tests
+        dotnet test --no-build --configuration Release --collect:"XPlat Code Coverage" --logger trx
       
     - name: Test Frontend
-      run: dotnet test ./FlagExplorer.Web.Tests/FlagExplorer.Web.Tests.csproj --no-build --configuration Release --collect:"XPlat Code Coverage" --logger trx
+      run: |
+        cd FlagExplorer.Web.Tests
+        dotnet test --no-build --configuration Release --collect:"XPlat Code Coverage" --logger trx
       
     - name: Publish Backend
       run: dotnet publish ./FlagExplorer.API/FlagExplorer.API.csproj -c Release -o ./publish/api

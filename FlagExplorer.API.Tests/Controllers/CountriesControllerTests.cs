@@ -1,4 +1,3 @@
-// FlagExplorer.API.Tests/Controllers/CountriesControllerTests.cs
 using FlagExplorer.API.Controllers;
 using FlagExplorer.Application.DTOs;
 using FlagExplorer.Application.Interfaces;
@@ -20,16 +19,17 @@ namespace FlagExplorer.API.Tests.Controllers
         }
 
         [Fact]
-        public async Task GetAllCountries_ReturnsOkResult_WithListOfCountries()
+        public async Task GetAllCountries_ReturnsOkResult_WithCountries()
         {
             // Arrange
-            var countries = new List<CountryDto>
+            var testCountries = new List<CountryDto>
             {
                 new() { Name = "USA", Flag = "usa.png" },
                 new() { Name = "Canada", Flag = "canada.png" }
             };
 
-            _mockService.Setup(s => s.GetAllCountriesAsync()).ReturnsAsync(countries);
+            _mockService.Setup(s => s.GetAllCountriesAsync())
+                       .ReturnsAsync(testCountries);
 
             // Act
             var result = await _controller.GetAllCountries();
@@ -41,10 +41,10 @@ namespace FlagExplorer.API.Tests.Controllers
         }
 
         [Fact]
-        public async Task GetCountryDetails_ReturnsOkResult_WhenCountryExists()
+        public async Task GetCountryDetails_ReturnsOkResult_WithCountryDetails()
         {
             // Arrange
-            var country = new CountryDetailsDto
+            var testCountry = new CountryDetailsDto
             {
                 Name = "USA",
                 Flag = "usa.png",
@@ -52,7 +52,8 @@ namespace FlagExplorer.API.Tests.Controllers
                 Population = 331000000
             };
 
-            _mockService.Setup(s => s.GetCountryDetailsAsync("USA")).ReturnsAsync(country);
+            _mockService.Setup(s => s.GetCountryDetailsAsync("USA"))
+                       .ReturnsAsync(testCountry);
 
             // Act
             var result = await _controller.GetCountryDetails("USA");
@@ -64,14 +65,14 @@ namespace FlagExplorer.API.Tests.Controllers
         }
 
         [Fact]
-        public async Task GetCountryDetails_ReturnsNotFound_WhenCountryDoesNotExist()
+        public async Task GetCountryDetails_ReturnsNotFound_ForInvalidCountry()
         {
             // Arrange
             _mockService.Setup(s => s.GetCountryDetailsAsync(It.IsAny<string>()))
-                .ReturnsAsync((CountryDetailsDto)null);
+                .ReturnsAsync((CountryDetailsDto?)null); // Note the nullable type
 
             // Act
-            var result = await _controller.GetCountryDetails("Unknown");
+            var result = await _controller.GetCountryDetails("InvalidCountry");
 
             // Assert
             Assert.IsType<NotFoundResult>(result);

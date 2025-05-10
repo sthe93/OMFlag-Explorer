@@ -1,4 +1,6 @@
 ﻿// Infrastructure/Services/CountryService.cs
+
+using System.Net;
 using FlagExplorer.Application.Interfaces;
 using FlagExplorer.Application.DTOs;
 using System.Text.Json;
@@ -32,21 +34,39 @@ public class CountryService : ICountryService
         });
     }
 
-    public async Task<CountryDetailsDto> GetCountryDetailsAsync(string name)
+    public async Task<CountryDetailsDto?> GetCountryDetailsAsync(string name)
     {
-        var response = await _httpClient.GetAsync($"name/{name}?fields=name,capital,population,flags");
-        response.EnsureSuccessStatusCode();
-
-        var content = await response.Content.ReadAsStringAsync();
-        var country = JsonSerializer.Deserialize<List<RestCountry>>(content, _options).FirstOrDefault();
-
-        return new CountryDetailsDto
+        try
         {
-            Name = country.Name.Common,
-            Flag = country.Flags.Png,
-            Capital = country.Capital.FirstOrDefault(),
-            Population = country.Population
-        };
+            var response = await _httpClient.GetAsync($"name/{name}?fields=name,capital,population,flags");
+
+            if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                return null;
+            }
+
+            response.EnsureSuccessStatusCode();
+
+            var content = await response.Content.ReadAsStringAsync();
+            var country = JsonSerializer.Deserialize<List<RestCountry>>(content, _options)?.FirstOrDefault();
+
+            if (country == null)
+            {
+                return null;
+            }
+
+            return new CountryDetailsDto
+            {
+                Name = country.Name.Common,
+                Flag = country.Flags.Png,
+                Capital = country.Capital?.FirstOrDefault(),
+                Population = country.Population
+            };
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
+        {
+            return null;
+        }
     }
 
     private class RestCountry
