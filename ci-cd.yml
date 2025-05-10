@@ -69,7 +69,12 @@ jobs:
           -reports:**/TestResults/**/coverage.cobertura.xml \
           -targetdir:./CoverageReport \
           -reporttypes:"Html;HtmlSummary;SonarQube;MarkdownSummary"
-      
+    - name: Debug - Show Files
+  run: |
+    echo "=== Consolidated folder contents ==="
+    ls -R consolidated-test-results
+    echo "=== Coverage files ==="
+    find . -name "coverage.*"
     # Upload all test artifacts
     - name: Upload Test Artifacts
       uses: actions/upload-artifact@v4
@@ -80,7 +85,26 @@ jobs:
           **/TestResults/*
           ./CoverageReport
         retention-days: 7
-      
+    # Add this right after your test steps (before publishing)
+    - name: Find and Prepare Test Results
+  run: |
+    echo "=== Test result files ==="
+    find . -name "*.trx" -o -name "*.html" -o -name "*.xml"
+    mkdir -p consolidated-test-results
+    cp **/TestResults/*.trx consolidated-test-results/
+    cp **/TestResults/*.html consolidated-test-results/
+    cp **/TestResults/*.xml consolidated-test-results/
+
+    - name: Upload Test Results
+         uses: actions/upload-artifact@v4
+         if: always()
+          with:
+          name: test-results
+         path: |
+      consolidated-test-results/*
+      **/coverage*.xml
+    retention-days: 3
+    
     # Publishing
     - name: Publish Backend
       run: dotnet publish ./FlagExplorer.API/FlagExplorer.API.csproj -c Release -o ./publish/api
