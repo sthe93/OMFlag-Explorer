@@ -1,0 +1,79 @@
+name: FlagExplorer CI/CD
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    # Setup .NET
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v4
+      with:
+        dotnet-version: '8.0.x'
+      
+    # Restore all projects
+    - name: Restore dependencies
+      run: dotnet restore
+      
+    # Build all projects
+    - name: Build
+      run: dotnet build --no-restore --configuration Release
+      
+    # Testing with proper result collection
+    - name: Test Backend
+      run: |
+        cd FlagExplorer.API.Tests
+        dotnet test --no-build --configuration Release \
+          --collect:"XPlat Code Coverage" \
+          --logger "trx;LogFileName=backend_results.trx" \
+          --results-directory TestResults
+      
+    - name: Test Frontend
+      run: |
+        cd FlagExplorer.Web.Tests
+        dotnet test --no-build --configuration Release \
+          --collect:"XPlat Code Coverage" \
+          --logger "trx;LogFileName=frontend_results.trx" \
+          --results-directory TestResults
+      
+    # Publish test results to GitHub UI
+    - name: Publish Test Results
+      uses: dorny/test-reporter@v1
+      if: always()
+      with:
+        name: Test Results
+        path: "**/TestResults/*.trx"
+        reporter: dotnet-trx
+        fail-on-error: false
+      
+    # Upload detailed test results and coverage as artifacts
+    - name: Upload Test Artifacts
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: test-artifacts
+        path: |
+          **/TestResults/*.trx
+          **/TestResults/*.xml
+          **/TestResults/*.coverage
+      
+    # Publishing
+    - name: Publish Backend
+      run: dotnet publish ./FlagExplorer.API/FlagExplorer.API.csproj -c Release -o ./publish/api
+      
+    - name: Publish Frontend
+      run: dotnet publish ./FlagExplorer.Web/FlagExplorer.Web.csproj -c Release -o ./publish/web
+      
+    - name: Upload Artifacts
+      uses: actions/upload-artifact@v4
+      with:
+        name: release-packages
+        path: ./publish
