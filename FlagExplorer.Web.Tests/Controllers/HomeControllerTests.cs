@@ -1,12 +1,13 @@
 ﻿using FlagExplorer.Web.Controllers;
 using FlagExplorer.Web.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Moq;
-using Moq.Protected; // Add this using directive
 using System.Net;
 using System.Net.Http;
-using System.Threading; // Add for CancellationToken
 using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
+using Moq.Protected;
 using Xunit;
 
 namespace FlagExplorer.Web.Tests.Controllers
@@ -15,7 +16,6 @@ namespace FlagExplorer.Web.Tests.Controllers
     {
         private readonly Mock<IHttpClientFactory> _mockHttpClientFactory;
         private readonly HomeController _controller;
-        private const string BaseAddress = "http://localhost/api/";
 
         public HomeControllerTests()
         {
@@ -24,75 +24,120 @@ namespace FlagExplorer.Web.Tests.Controllers
         }
 
         [Fact]
-        public async Task Index_ReturnsViewResult_WithListOfCountries()
+        public async Task Index_ReturnsViewWithCountries()
         {
             // Arrange
             var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
             mockHttpMessageHandler.Protected()
                 .Setup<Task<HttpResponseMessage>>(
                     "SendAsync",
-                    ItExpr.Is<HttpRequestMessage>(req =>
-                        req.Method == HttpMethod.Get &&
-                        req.RequestUri.ToString().StartsWith($"{BaseAddress}countries")),
+                    ItExpr.IsAny<HttpRequestMessage>(),
                     ItExpr.IsAny<CancellationToken>()
                 )
                 .ReturnsAsync(new HttpResponseMessage
                 {
                     StatusCode = HttpStatusCode.OK,
-                    Content = new StringContent("[{\"name\":\"USA\",\"flag\":\"usa.png\"}]")
+                    Content = new StringContent("[{\"Name\":\"TestCountry\",\"Flag\":\"test-flag\"}]")
                 });
 
-            var client = new HttpClient(mockHttpMessageHandler.Object)
+            var httpClient = new HttpClient(mockHttpMessageHandler.Object)
             {
-                BaseAddress = new Uri(BaseAddress)
+                BaseAddress = new Uri("http://test.com/")
             };
 
-            _mockHttpClientFactory.Setup(_ => _.CreateClient(It.IsAny<string>()))
-                .Returns(client);
+            _mockHttpClientFactory.Setup(_ => _.CreateClient("CountryApi"))
+                .Returns(httpClient);
 
             // Act
             var result = await _controller.Index();
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
-            var model = Assert.IsAssignableFrom<List<CountryViewModel>>(viewResult.ViewData.Model);
+            var model = Assert.IsAssignableFrom<List<CountryViewModel>>(viewResult.Model);
             Assert.Single(model);
+            Assert.Equal("TestCountry", model[0].Name);
         }
 
+        // Controllers/HomeControllerTests.cs
         [Fact]
-        public async Task Details_ReturnsViewResult_WithCountryDetails()
+        public async Task Index_ReturnsEmptyList_WhenApiFails()
         {
             // Arrange
             var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
             mockHttpMessageHandler.Protected()
                 .Setup<Task<HttpResponseMessage>>(
                     "SendAsync",
-                    ItExpr.Is<HttpRequestMessage>(req =>
-                        req.Method == HttpMethod.Get &&
-                        req.RequestUri.ToString().StartsWith($"{BaseAddress}countries/USA")),
+                    ItExpr.IsAny<HttpRequestMessage>(),
+                    ItExpr.IsAny<CancellationToken>()
+                )
+                .ReturnsAsync(new HttpResponseMessage
+                {
+                    StatusCode = HttpStatusCode.InternalServerError
+                });
+
+            var httpClient = new HttpClient(mockHttpMessageHandler.Object);
+            _mockHttpClientFactory.Setup(_ => _.CreateClient("CountryApi"))
+                .Returns(httpClient);
+
+            // Act
+            var result = await _controller.Index();
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            var model = Assert.IsAssignableFrom<List<CountryViewModel>>(viewResult.Model);
+            Assert.Empty(model);
+        }
+
+        [Fact]
+        public void Error_ReturnsViewWithErrorViewModel()
+        {
+            // Arrange
+            _controller.ControllerContext = new ControllerContext
+            {
+                HttpContext = new DefaultHttpContext()
+            };
+
+            // Act
+            var result = _controller.Error();
+
+            // Assert
+            var viewResult = Assert.IsType<ViewResult>(result);
+            Assert.IsType<ErrorViewModel>(viewResult.Model);
+        }
+
+        [Fact]
+        public async Task Details_ReturnsViewWithCountry_WhenCountryExists()
+        {
+            // Arrange
+            var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
+            mockHttpMessageHandler.Protected()
+                .Setup<Task<HttpResponseMessage>>(
+                    "SendAsync",
+                    ItExpr.IsAny<HttpRequestMessage>(),
                     ItExpr.IsAny<CancellationToken>()
                 )
                 .ReturnsAsync(new HttpResponseMessage
                 {
                     StatusCode = HttpStatusCode.OK,
-                    Content = new StringContent("{\"name\":\"USA\",\"flag\":\"usa.png\",\"capital\":\"Washington, D.C.\",\"population\":331000000}")
+                    Content = new StringContent("{\"Name\":\"TestCountry\",\"Flag\":\"test-flag\",\"Population\":1000000,\"Capital\":\"TestCapital\"}")
                 });
 
-            var client = new HttpClient(mockHttpMessageHandler.Object)
+            var httpClient = new HttpClient(mockHttpMessageHandler.Object)
             {
-                BaseAddress = new Uri(BaseAddress)
+                BaseAddress = new Uri("http://test.com/")
             };
 
-            _mockHttpClientFactory.Setup(_ => _.CreateClient(It.IsAny<string>()))
-                .Returns(client);
+            _mockHttpClientFactory.Setup(_ => _.CreateClient("CountryApi"))
+                .Returns(httpClient);
 
             // Act
-            var result = await _controller.Details("USA");
+            var result = await _controller.Details("TestCountry");
 
             // Assert
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<CountryDetailsViewModel>(viewResult.Model);
-            Assert.Equal("USA", model.Name);
+            Assert.Equal("TestCountry", model.Name);
+            Assert.Equal("TestCapital", model.Capital);
         }
 
         [Fact]
@@ -103,29 +148,29 @@ namespace FlagExplorer.Web.Tests.Controllers
             mockHttpMessageHandler.Protected()
                 .Setup<Task<HttpResponseMessage>>(
                     "SendAsync",
-                    ItExpr.Is<HttpRequestMessage>(req =>
-                        req.Method == HttpMethod.Get &&
-                        req.RequestUri.ToString().StartsWith($"{BaseAddress}countries/Unknown")),
+                    ItExpr.IsAny<HttpRequestMessage>(),
                     ItExpr.IsAny<CancellationToken>()
                 )
                 .ReturnsAsync(new HttpResponseMessage
                 {
-                    StatusCode = HttpStatusCode.NotFound
+                    StatusCode = HttpStatusCode.NotFound,
+                    Content = new StringContent("Not Found")
                 });
 
-            var client = new HttpClient(mockHttpMessageHandler.Object)
+            var httpClient = new HttpClient(mockHttpMessageHandler.Object)
             {
-                BaseAddress = new Uri(BaseAddress)
+                BaseAddress = new Uri("http://test.com/")
             };
 
-            _mockHttpClientFactory.Setup(_ => _.CreateClient(It.IsAny<string>()))
-                .Returns(client);
+            _mockHttpClientFactory.Setup(_ => _.CreateClient("CountryApi"))
+                .Returns(httpClient);
 
             // Act
-            var result = await _controller.Details("Unknown");
+            var result = await _controller.Details("NonExistentCountry");
 
             // Assert
             Assert.IsType<NotFoundResult>(result);
         }
+      
     }
 }

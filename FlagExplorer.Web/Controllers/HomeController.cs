@@ -1,4 +1,6 @@
 // Controllers/HomeController.cs
+
+using System.Net;
 using FlagExplorer.Web.Models;
 using Microsoft.AspNetCore.Mvc;
 using System.Net.Http.Json;
@@ -14,30 +16,63 @@ public class HomeController : Controller
         _httpClientFactory = httpClientFactory;
     }
 
+    // Controllers/HomeController.cs
     public async Task<IActionResult> Index()
     {
-        var client = _httpClientFactory.CreateClient("CountryApi");
-        var countries = await client.GetFromJsonAsync<List<CountryViewModel>>("countries");
+        try
+        {
+            var client = _httpClientFactory.CreateClient("CountryApi");
+            var response = await client.GetAsync("countries");
 
-        return View(countries ?? new List<CountryViewModel>());
+            if (!response.IsSuccessStatusCode)
+            {
+                return View(new List<CountryViewModel>());
+            }
+
+            var countries = await response.Content.ReadFromJsonAsync<List<CountryViewModel>>();
+            return View(countries ?? new List<CountryViewModel>());
+        }
+        catch
+        {
+            return View(new List<CountryViewModel>());
+        }
+    }
+
+    public IActionResult Error()
+    {
+        return View(new ErrorViewModel
+        {
+            RequestId = HttpContext?.TraceIdentifier ?? "unknown"
+        });
     }
 
     public async Task<IActionResult> Details(string name)
     {
-        var client = _httpClientFactory.CreateClient("CountryApi");
-        var country = await client.GetFromJsonAsync<CountryDetailsViewModel>($"countries/{name}");
+        try
+        {
+            var client = _httpClientFactory.CreateClient("CountryApi");
+            var response = await client.GetAsync($"countries/{name}");
 
-        if (country == null)
+            if (response.StatusCode == HttpStatusCode.NotFound)
+            {
+                return NotFound();
+            }
+
+            response.EnsureSuccessStatusCode();
+
+            var country = await response.Content.ReadFromJsonAsync<CountryDetailsViewModel>();
+            return View(country);
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == HttpStatusCode.NotFound)
         {
             return NotFound();
         }
-
-        return View(country);
+        catch
+        {
+            // Log the error
+            return StatusCode(500, "Error contacting the API");
+        }
     }
 
-    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-    public IActionResult Error()
-    {
-        return View(new ErrorViewModel { RequestId = System.Diagnostics.Activity.Current?.Id ?? HttpContext.TraceIdentifier });
-    }
+    
 }
