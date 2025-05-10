@@ -73,6 +73,4 @@ public class HomeController : Controller
             return StatusCode(500, "Error contacting the API");
         }
     }
-
-    
 }

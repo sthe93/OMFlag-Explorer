@@ -36,7 +36,7 @@ jobs:
         cd FlagExplorer.Web.Tests
         dotnet test --no-build --configuration Release --collect:"XPlat Code Coverage" --logger trx
       
-    # Publishin
+    # s
     - name: Publish Backend
       run: dotnet publish ./FlagExplorer.API/FlagExplorer.API.csproj -c Release -o ./publish/api
       
