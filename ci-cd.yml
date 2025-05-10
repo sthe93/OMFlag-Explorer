@@ -13,15 +13,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
-    # First verify the repository structure
-    - name: Inspect repository structure
-      run: |
-        echo "Current directory: $(pwd)"
-        ls -la
-        echo "FlagExplorer.Web contents:"
-        ls -la FlagExplorer.Web/
-    
-    # Backend setup
+    # .NET Setup
     - name: Setup .NET
       uses: actions/setup-dotnet@v4
       with:
@@ -33,38 +25,24 @@ jobs:
     - name: Build
       run: dotnet build --no-restore --configuration Release
       
-    # Frontend setup - PRECISE PATH
-    - name: Setup Node.js
-      uses: actions/setup-node@v4
-      with:
-        node-version: '20'
-        
-    - name: Install frontend dependencies
-      working-directory: ./FlagExplorer.Web
-      run: |
-        echo "Installing in: $(pwd)"
-        ls -la
-        if [ -f "package.json" ]; then
-          npm ci
-        else
-          echo "::error::package.json not found in FlagExplorer.Web"
-          exit 1
-        fi
-      
-    - name: Build frontend
-      working-directory: ./FlagExplorer.Web
-      run: npm run build
-      
     # Testing
     - name: Test Backend
-      run: dotnet test --no-build --configuration Release
-    
-    # Publishing
-    - name: Publish
       run: |
-        dotnet publish ./FlagExplorer.API -c Release -o ./publish/api
-        dotnet publish ./FlagExplorer.Web -c Release -o ./publish/web
-        
+        cd FlagExplorer.API.Tests
+        dotnet test --no-build --configuration Release --collect:"XPlat Code Coverage" --logger trx
+      
+    - name: Test Frontend
+      run: |
+        cd FlagExplorer.Web.Tests
+        dotnet test --no-build --configuration Release --collect:"XPlat Code Coverage" --logger trx
+      
+    # Publishin
+    - name: Publish Backend
+      run: dotnet publish ./FlagExplorer.API/FlagExplorer.API.csproj -c Release -o ./publish/api
+      
+    - name: Publish Frontend
+      run: dotnet publish ./FlagExplorer.Web/FlagExplorer.Web.csproj -c Release -o ./publish/web
+      
     - name: Upload Artifacts
       uses: actions/upload-artifact@v4
       with:
