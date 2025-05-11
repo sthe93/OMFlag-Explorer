@@ -16,7 +16,6 @@ Flag Explorer is a full-stack web application that allows users to browse and ex
 * 📊 View detailed country information: capital, population, region, and more.
 * 🚀 Fast, responsive UI built with Bootstrap.
 * 🧪 Automated tests ensure reliability and stability.
-* 📦 Docker support for containerized deployments.
 
 ## Architecture
 
@@ -33,7 +32,6 @@ User → MVC Frontend → Backend API → External Country Service (REST)
 ### Prerequisites
 
 * [.NET 8 SDK](https://dotnet.microsoft.com/download)
-* [Docker](https://www.docker.com/) (optional)
 
 ### Clone Repository
 
