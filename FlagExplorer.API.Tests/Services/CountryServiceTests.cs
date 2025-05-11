@@ -29,7 +29,7 @@ namespace FlagExplorer.API.Tests.Services
         [Fact]
         public async Task GetAllCountriesAsync_ReturnsCountries()
         {
-            // Arrange
+            
             var responseJson = @"[
                 {
                     ""name"": {""common"": ""USA""},
@@ -55,10 +55,10 @@ namespace FlagExplorer.API.Tests.Services
                     Content = new StringContent(responseJson)
                 });
 
-            // Act
+            
             var result = await _countryService.GetAllCountriesAsync();
 
-            // Assert
+         
             Assert.NotNull(result);
             Assert.Equal(2, result.Count());
             Assert.Contains(result, c => c.Name == "USA");
@@ -68,7 +68,7 @@ namespace FlagExplorer.API.Tests.Services
         [Fact]
         public async Task GetCountryDetailsAsync_ReturnsCountryDetails()
         {
-            // Arrange
+            
             var responseJson = @"[
                 {
                     ""name"": {""common"": ""USA""},
@@ -92,10 +92,10 @@ namespace FlagExplorer.API.Tests.Services
                     Content = new StringContent(responseJson)
                 });
 
-            // Act
+            
             var result = await _countryService.GetCountryDetailsAsync("USA");
 
-            // Assert
+           
             Assert.NotNull(result);
             Assert.Equal("USA", result.Name);
             Assert.Equal("Washington, D.C.", result.Capital);

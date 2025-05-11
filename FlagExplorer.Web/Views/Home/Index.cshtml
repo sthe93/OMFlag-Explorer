@@ -7,10 +7,24 @@
 <div class="container">
     <h1 class="text-center mb-4">Flag Explorer</h1>
     
-    <div class="row">
+    <!-- Add Search Box -->
+    <div class="row mb-4">
+        <div class="col-md-6 mx-auto">
+            <div class="input-group">
+                <input type="text" id="searchInput" class="form-control" placeholder="Search countries..." aria-label="Search countries">
+                <div class="input-group-append">
+                    <button class="btn btn-outline-secondary" type="button" id="clearSearch">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="row" id="countriesContainer">
         @foreach (var country in Model)
         {
-            <div class="col-md-3 mb-4">
+            <div class="col-md-3 mb-4 country-card" data-name="@country.Name.ToLower()">
                 <div class="card h-100">
                     <a asp-action="Details" asp-route-name="@country.Name">
                         <img src="@country.Flag" class="card-img-top" alt="@country.Name Flag">
@@ -22,4 +36,42 @@
             </div>
         }
     </div>
+    
+    <!-- Add No Results Message (hidden by default) -->
+    <div id="noResults" class="text-center mt-5" style="display: none;">
+        <h4>No countries found matching your search</h4>
+    </div>
 </div>
+
+@section Scripts {
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('searchInput');
+            const clearSearch = document.getElementById('clearSearch');
+            const countryCards = document.querySelectorAll('.country-card');
+            const noResults = document.getElementById('noResults');
+            
+            searchInput.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                let hasMatches = false;
+                
+                countryCards.forEach(card => {
+                    const countryName = card.getAttribute('data-name');
+                    if (countryName.includes(searchTerm)) {
+                        card.style.display = 'block';
+                        hasMatches = true;
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+                
+                noResults.style.display = hasMatches ? 'none' : 'block';
+            });
+            
+            clearSearch.addEventListener('click', function() {
+                searchInput.value = '';
+                searchInput.dispatchEvent(new Event('input'));
+            });
+        });
+    </script>
+}

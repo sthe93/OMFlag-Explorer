@@ -26,7 +26,7 @@ namespace FlagExplorer.Web.Tests.Controllers
         [Fact]
         public async Task Index_ReturnsViewWithCountries()
         {
-            // Arrange
+            
             var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
             mockHttpMessageHandler.Protected()
                 .Setup<Task<HttpResponseMessage>>(
@@ -48,21 +48,21 @@ namespace FlagExplorer.Web.Tests.Controllers
             _mockHttpClientFactory.Setup(_ => _.CreateClient("CountryApi"))
                 .Returns(httpClient);
 
-            // Act
+          
             var result = await _controller.Index();
 
-            // Assert
+            
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsAssignableFrom<List<CountryViewModel>>(viewResult.Model);
             Assert.Single(model);
             Assert.Equal("TestCountry", model[0].Name);
         }
 
-        // Controllers/HomeControllerTests.cs
+       
         [Fact]
         public async Task Index_ReturnsEmptyList_WhenApiFails()
         {
-            // Arrange
+            
             var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
             mockHttpMessageHandler.Protected()
                 .Setup<Task<HttpResponseMessage>>(
@@ -79,10 +79,10 @@ namespace FlagExplorer.Web.Tests.Controllers
             _mockHttpClientFactory.Setup(_ => _.CreateClient("CountryApi"))
                 .Returns(httpClient);
 
-            // Act
+         
             var result = await _controller.Index();
 
-            // Assert
+           
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsAssignableFrom<List<CountryViewModel>>(viewResult.Model);
             Assert.Empty(model);
@@ -91,16 +91,16 @@ namespace FlagExplorer.Web.Tests.Controllers
         [Fact]
         public void Error_ReturnsViewWithErrorViewModel()
         {
-            // Arrange
+            
             _controller.ControllerContext = new ControllerContext
             {
                 HttpContext = new DefaultHttpContext()
             };
 
-            // Act
+         
             var result = _controller.Error();
 
-            // Assert
+         
             var viewResult = Assert.IsType<ViewResult>(result);
             Assert.IsType<ErrorViewModel>(viewResult.Model);
         }
@@ -108,7 +108,7 @@ namespace FlagExplorer.Web.Tests.Controllers
         [Fact]
         public async Task Details_ReturnsViewWithCountry_WhenCountryExists()
         {
-            // Arrange
+            
             var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
             mockHttpMessageHandler.Protected()
                 .Setup<Task<HttpResponseMessage>>(
@@ -130,10 +130,10 @@ namespace FlagExplorer.Web.Tests.Controllers
             _mockHttpClientFactory.Setup(_ => _.CreateClient("CountryApi"))
                 .Returns(httpClient);
 
-            // Act
+          
             var result = await _controller.Details("TestCountry");
 
-            // Assert
+            
             var viewResult = Assert.IsType<ViewResult>(result);
             var model = Assert.IsType<CountryDetailsViewModel>(viewResult.Model);
             Assert.Equal("TestCountry", model.Name);
@@ -143,7 +143,7 @@ namespace FlagExplorer.Web.Tests.Controllers
         [Fact]
         public async Task Details_ReturnsNotFound_WhenCountryDoesNotExist()
         {
-            // Arrange
+            
             var mockHttpMessageHandler = new Mock<HttpMessageHandler>();
             mockHttpMessageHandler.Protected()
                 .Setup<Task<HttpResponseMessage>>(
@@ -165,10 +165,10 @@ namespace FlagExplorer.Web.Tests.Controllers
             _mockHttpClientFactory.Setup(_ => _.CreateClient("CountryApi"))
                 .Returns(httpClient);
 
-            // Act
+            
             var result = await _controller.Details("NonExistentCountry");
 
-            // Assert
+            
             Assert.IsType<NotFoundResult>(result);
         }
       

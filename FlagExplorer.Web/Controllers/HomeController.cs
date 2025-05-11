@@ -1,5 +1,3 @@
-// Controllers/HomeController.cs
-
 using System.Net;
 using FlagExplorer.Web.Models;
 using Microsoft.AspNetCore.Mvc;
@@ -16,7 +14,6 @@ public class HomeController : Controller
         _httpClientFactory = httpClientFactory;
     }
 
-    // Controllers/HomeController.cs
     public async Task<IActionResult> Index()
     {
         try
@@ -69,7 +66,7 @@ public class HomeController : Controller
         }
         catch
         {
-            // Log the error
+            
             return StatusCode(500, "Error contacting the API");
         }
     }

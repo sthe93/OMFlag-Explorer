@@ -1,5 +1,4 @@
-﻿// Controllers/CountriesController.cs
-using FlagExplorer.Application.Interfaces;
+﻿using FlagExplorer.Application.Interfaces;
 using Microsoft.AspNetCore.Mvc;
 
 namespace FlagExplorer.API.Controllers;

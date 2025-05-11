@@ -4,7 +4,6 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-// Domain/Entities/Country.cs
 namespace FlagExplorer.Domain.Entities;
 public class Country
 {
